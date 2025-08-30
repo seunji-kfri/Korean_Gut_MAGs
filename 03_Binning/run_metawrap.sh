@@ -44,5 +44,3 @@ metawrap bin_refinement \
 
 # Clean up intermediate files
 rm -f ./reads_1.fastq ./reads_2.fastq $ASSEMBLY
-
-echo "[INFO] Binning and refinement for ${SAMPLE} completed and saved to ${BINNING_DIR}/${SAMPLE}.bins"
