@@ -1,4 +1,6 @@
 #!/bin/bash
+# Usage: run_flye.sh <sample_id>
+# <sample_id> : The ID of the sample (e.g., SAMPLE01)
 
 # Number of threads (adjust as necessary)
 CPU=20
