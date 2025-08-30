@@ -32,7 +32,7 @@ Illumina short-read and ONT long-read preprocessing pipelines.
 python 01_QC/preprocess_shortreads.py \
   --sample SAMPLE01 \
   --r1 SAMPLE01_R1.fastq.gz --r2 SAMPLE01_R2.fastq.gz \
-  --outdir preprocess_out \
+  --outdir 01_QC/out \
   --trimmomatic_adapters adapters/TruSeq3-PE.fa \
   --human_bowtie2_index /path/to/human_index
 ```
@@ -41,7 +41,7 @@ python 01_QC/preprocess_shortreads.py \
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
   --in_fastq SAMPLE01.fastq.gz \
-  --outdir preprocess_out \
+  --outdir 01_QC/out \
   --human_mmi /path/to/human.mmi
 ```
 **Long-reads with PAF filter** (identity ≥80%, coverage ≥30%):
@@ -49,7 +49,7 @@ python 01_QC/preprocess_longreads.py \
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
   --in_fastq SAMPLE01.fastq.gz \
-  --outdir preprocess_out \
+  --outdir 01_QC/out \
   --human_mmi /path/to/human.mmi \
   --paf_filter 80 30 \
   --paf_parser 01_QC/paf_parser.py
@@ -73,7 +73,7 @@ bash 02_Assembly/run_flye.sh SAMPLE01
 - Input:
   -SAMPLE01.nohuman.fastq (Long-read QC output)
 - Output:
-  -SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
+  -02_Assembly/out/SAMPLE01/contigs_polished.fasta (Flye assembly output, long-read only)
 
 **Short-read and Hybrid assembly:** 
 ```bash
@@ -88,8 +88,26 @@ bash 02_Assembly/run_operams.sh \
   - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read)
 
 - Output: 
-  - SAMPLE01_hybrid/intermediate_files/spades_assembly/contigs.fasta (SPAdes output, short-read only)
-  - SAMPLE01_hybrid/contigs.polished.fasta (OPERA-MS hybrid assembly output, combining short- and long-reads)
+  - 02_Assembly/out/SAMPLE01_hybrid/spades_assembly/contigs.fasta (SPAdes output, short-read only)
+  - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (OPERA-MS hybrid assembly output, combining short- and long-reads)
+
+---
+
+### 03_Binning/
+Binning workflows using MetaWRAP.
+
+- **`run_metawrap.sh`**: Perform binning and refinement using MetaWRAP.
+
+#### Example usage
+```bash
+bash 03_Binning/run_metawrap.sh SAMPLE01 short_srr_1
+```
+- Input:
+  - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
+  - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (hybrid assembly)
+
+- Output: 
+  - Binning and refinement results saved to 03_Binning/out/SAMPLE01/SAMPLE01.bins
 
 ---
 
