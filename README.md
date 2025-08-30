@@ -71,8 +71,10 @@ Run Flye to assemble ONT long-reads.
 ```bash
 bash 02_Assembly/run_flye.sh SAMPLE01
 ```
-- Input: SAMPLE01.nohuman.fastq (Long-read QC output)
-- Output: SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
+- Input:
+  -SAMPLE01.nohuman.fastq (Long-read QC output)
+- Output:
+  -SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
 
 **Short-read and Hybrid assembly (OPERA-MS with SPAdes output)** 
 Run OPERA-MS to perform hybrid assembly using short and long reads. 
