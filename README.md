@@ -25,6 +25,7 @@ This repository contains scripts and workflows used in the study:
 
 #### Example usage
 Short-reads:
+```bash
 python 01_QC/preprocess_shortreads.py \
   --sample SAMPLE01 \
   --r1 SAMPLE01_R1.fastq.gz --r2 SAMPLE01_R2.fastq.gz \
@@ -32,7 +33,8 @@ python 01_QC/preprocess_shortreads.py \
   --trimmomatic_adapters adapters/TruSeq3-PE.fa \
   --human_bowtie2_index /path/to/human_index
 
-Long-reads(default: unmapped only):
+Long-reads (default: unmapped only):
+```bash
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
   --in_fastq SAMPLE01.fastq.gz \
@@ -40,6 +42,7 @@ python 01_QC/preprocess_longreads.py \
   --human_mmi /path/to/human.mmi
 
 Long-reads with PAF filter (identity ≥80%, coverage ≥30%):
+```bash
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
   --in_fastq SAMPLE01.fastq.gz \
