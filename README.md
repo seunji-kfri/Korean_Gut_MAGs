@@ -66,7 +66,7 @@ This section contains scripts for performing assembly of short and long reads us
 
 #### Example usage
 
-**Long-read assembly (Flye)**  
+**Long-read assembly:**  
 ```bash
 bash 02_Assembly/run_flye.sh SAMPLE01
 ```
@@ -75,7 +75,7 @@ bash 02_Assembly/run_flye.sh SAMPLE01
 - Output:
   -SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
 
-**Short-read and Hybrid assembly (OPERA-MS with SPAdes output)** 
+**Short-read and Hybrid assembly:** 
 ```bash
 bash 02_Assembly/run_operams.sh \
   /path/to/SAMPLE01.nohuman.fastq \
