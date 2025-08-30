@@ -3,19 +3,14 @@
 # Number of threads (adjust as necessary)
 CPU=20
 
-# Activate conda environment
-. ~/enable_conda.rc
-conda activate kfri_genome_pipeline
+# Activate conda environment (make sure the environment created via 'environment.yml' is available)
+conda activate KoreanGutMAGs   # Example: Change this to the actual environment name
 
-# Define temporary directories
-T=/tmp/flye_${1##*/}
-C=/tmp/${1##*/}_contigs.fasta
+# Define output directory
+OUTPUT_DIR=$1   # Use the sample ID as the output directory
 
 # Run Flye assembly (ONT long-read)
-flye --meta --nano-raw /home/caefs/microbiome/projects/metagenome_analysis/KMAGs/assembly_long/reads/${1}.nohuman.fastq --out-dir $T --threads $CPU
-
-# Move output to designated folder
-mkdir -p $1 && mv -f /tmp/flye_${1##*/} $1
+flye --meta --nano-raw /path/to/your/input/${1}.nohuman.fastq --out-dir $OUTPUT_DIR --threads $CPU
 
 # Deactivate conda environment
 conda deactivate
