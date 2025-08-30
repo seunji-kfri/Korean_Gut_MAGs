@@ -134,21 +134,27 @@ bash run_annotation.sh SAMPLE01 SAMPLE01 ./04_Annotation/out
 ---
 
 ### 05_Taxonomy_Analysis/
-???.
+Taxonomic classification using GTDB-Tk.
 
-- **`run_gtdbkt.sh`**: Perform functional annotation using Prokka and Eggnog????.
+This section uses **GTDB-Tk** to perform taxonomic classification of genome bins.
 
 #### Example usage
 ```bash
-bash 04_Annotation/run_annotation.sh ???
+gtdbtk classify_wf \
+  --genome_dir ./03_Binning/out/SAMPLE01.bins/refined/metawrap_50_10_bins \
+  --out_dir ./04_Taxonomy/out \
+  -x fna \
+  --cpus 40 \
+  --pplacer_cpus 10 \
+  --keep_intermediates \
+  --write_single_copy_genes \
+  --skip_ani_screen
 ```
 - Input:
-  - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
-  - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (hybrid assembly)
+  - ./03_Binning/out/SAMPLE01.bins/refined/metawrap_50_10_bins/bin.*.fa (Binned genome files)
 
 - Output: 
-  - Binning and refinement results saved to 03_Binning/out/SAMPLE01.bins
-
+  - Taxonomic classification results saved to ./04_Taxonomy/out
 ---
 
 ## 🔧 Required resources (not included in this repo)
