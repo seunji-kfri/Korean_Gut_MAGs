@@ -122,7 +122,7 @@ Functional annotation of genome bins using Prokka and EggNOG.
 
 #### Example usage:
 ```bash
-bash run_annotation.sh SAMPLE01 SAMPLE01 ./04_Annotation/out
+bash 04_Annotation/run_annotation.sh SAMPLE01 SAMPLE01 ./04_Annotation/out
 ```
 - Input:
   - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
