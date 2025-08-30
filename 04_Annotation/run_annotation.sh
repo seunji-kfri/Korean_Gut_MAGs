@@ -1,78 +1,38 @@
 #!/bin/bash
+# Usage: run_annotation.sh <sample_id> <short_srr_1> <output_directory>
+# <sample_id> : The ID of the sample (e.g., SAMPLE01)
+# <short_srr_1> : The prefix for short-read files (e.g., SAMPLE01_1.nohuman.fq.gz)
+# <output_directory> : The directory where the annotation results will be saved (e.g., annotation_results)
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: bash $0 <sample_id>" >&2
-  exit 1
-fi
+# Activate conda environment for annotation (using the correct environment name)
+conda activate KoreanGutMAGs  # Ensure this is the environment created with 'environment.yml'
 
-SAMPLE="$1"
-THREADS="${THREADS:-20}"     # per-bin thread count
-NPROC="${NPROC:-4}"          # number of bins to run in parallel
+# Directories
+BINNING_DIR=./03_Binning/out  # Path to binning results
+ANNOTATION_DIR=$3  # Output directory for annotations
 
-BINS_DIR="/home/caefs/microbiome/projects/metagenome_analysis/China/operams/${SAMPLE}.bins/refined/metawrap_50_10_bins/"
-ANNOT_BASE="/home/caefs/microbiome/projects/metagenome_analysis/China/annotation"
-ANNOT_DIR="${ANNOT_BASE}/${SAMPLE}"
+# Input files (e.g., binning results)
+BINS=$BINNING_DIR/$1/$1.bins/refined/metawrap_50_10_bins/bin.*.fa  # Binning files for the sample
 
-mkdir -p "$ANNOT_DIR"
-shopt -s nullglob
-bins=( "${BINS_DIR}"/bin.*.fa )
-shopt -u nullglob
+# Create output directory if it doesn't exist
+mkdir -p $ANNOTATION_DIR
 
-if [[ ${#bins[@]} -eq 0 ]]; then
-  echo "[WARN] No bins found in ${BINS_DIR}"
-  exit 0
-fi
+# Loop through each bin file for annotation
+for bin_file in $BINS; do
+    # Extract bin ID from the file name
+    bin_id=$(basename $bin_file | cut -d'.' -f2)
 
-echo "[INFO] Sample: ${SAMPLE}, Bins: ${#bins[@]}, Threads/bin: ${THREADS}, Parallel bins: ${NPROC}"
+    # Create output directories for Prokka and EggNOG
+    bin_output_dir=$ANNOTATION_DIR/$1/bin_$bin_id
+    mkdir -p $bin_output_dir
 
-# 함수 정의: 개별 bin 처리
-run_bin() {
-  fasta="$1"
-  SAMPLE="$2"
-  THREADS="$3"
-  ANNOT_DIR="$4"
+    # Run Prokka annotation
+    prokka --cpus 20 --outdir $bin_output_dir/prokka --prefix $bin_id --locustag $bin_id $bin_file
 
-  bn="$(basename "$fasta")"
-  cluster_index="${bn##bin.}"
-  cluster_index="${cluster_index%.fa}"
-  bin_id="${SAMPLE}C${cluster_index}"
+    # Run EggNOG annotation
+    emapper.py --cpu 20 --dbmem -i $bin_output_dir/prokka/$bin_id.faa --output $bin_output_dir/eggnog --temp_dir /tmp
 
-  prokka_dir="${ANNOT_DIR}/${bin_id}.prokka"
-  prokka_log="${ANNOT_DIR}/${bin_id}.prokka.log"
-  eggnog_dir="${ANNOT_DIR}/${bin_id}.em"
-  eggnog_log="${ANNOT_DIR}/${bin_id}.em.log"
+done
 
-  # Prokka
-  prokka_dir="${ANNOT_DIR}/${bin_id}.prokka"
-  prokka_log="${ANNOT_DIR}/${bin_id}.prokka.log"
-
-  echo "[RUN ][PROKKA] $bin_id -> $prokka_dir"
-  prokka --cpus "$THREADS" \
-         --outdir "$prokka_dir" \
-         --prefix "$bin_id" \
-         --locustag "$bin_id" \
-         --metagenome \
-         "$fasta" &> "$prokka_log"
-  # eggNOG
-  faa="${prokka_dir}/${bin_id}.faa"
-  if [[ -s "$faa" ]]; then
-    if [[ -d "$eggnog_dir" && -s "${eggnog_dir}/${bin_id}.annotations" ]]; then
-      echo "[SKIP][EMAPPER] $bin_id"
-    else
-      mkdir -p "$eggnog_dir"
-      emapper.py --cpu "$THREADS" --dbmem \
-                 -i "$faa" \
-                 --output_dir "$eggnog_dir" \
-                 --output "$bin_id" &> "$eggnog_log"
-    fi
-  else
-    echo "[WARN] $bin_id skipped (no faa)"
-  fi
-}
-
-export -f run_bin
-export SAMPLE THREADS ANNOT_DIR
-
-printf "%s\n" "${bins[@]}" | xargs -n1 -P "$NPROC" -I{} bash -c 'run_bin "$@"' _ {} "$SAMPLE" "$THREADS" "$ANNOT_DIR"
-
-echo "[INFO] Done: $SAMPLE"
+# Deactivate conda environment
+conda deactivate
