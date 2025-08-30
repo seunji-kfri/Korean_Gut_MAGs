@@ -68,12 +68,12 @@ This section contains scripts for performing assembly of short and long reads us
 
 **Long-read assembly:**  
 ```bash
-bash 02_Assembly/run_flye.sh SAMPLE01
+bash 02_Assembly/run_flye.sh SAMPLE01 ./02_Assembly/out/SAMPLE01_long
 ```
 - Input:
   -SAMPLE01.nohuman.fastq (Long-read QC output)
 - Output:
-  -02_Assembly/out/SAMPLE01/contigs_polished.fasta (Flye assembly output, long-read only)
+  -02_Assembly/out/SAMPLE01_long/contigs_polished.fasta (Flye assembly output, long-read only)
 
 **Short-read and Hybrid assembly:** 
 ```bash
