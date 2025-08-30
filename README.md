@@ -59,6 +59,15 @@ python 01_QC/preprocess_longreads.py \
 - `04_Annotation/` : Functional annotation (Prokka, EggNOG-mapper, etc.)
 - `05_Taxonomy_Analysis/` : Taxonomic classification (GTDB-Tk) and summary scripts
 
+## 🔧 Required resources (not included in this repo)
+1) Trimmomatic adapters (TruSeq3-PE.fa)  
+   - provided with Trimmomatic installation  
+
+2) Human reference indexes (GRCh38 or T2T-CHM13 FASTA)  
+   - build Bowtie2 index (`bowtie2-build`) and Minimap2 index (`minimap2 -d`)
+
+---
+
 ## ⚙️ Environment
 We used conda-based environments.  
 Recreate the environment as:
