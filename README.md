@@ -54,8 +54,40 @@ python 01_QC/preprocess_longreads.py \
 ---
 
 ### 02_Assembly/
-- Hybrid and single-technology assembly scripts
-  
+Assembly workflows for short-read, long-read, and hybrid assemblies.
+
+This section contains scripts for performing assembly of short and long reads using different tools.
+
+- **`run_flye.sh`**: Long-read assembly using Flye
+- **`run_operams.sh`**: Short-read and Hybrid assembly using OPERA-MS (short-read / short-read + long-read)
+
+#### Example usage
+
+**Long-read assembly (Flye)**  
+Run Flye to assemble ONT long-reads.
+```bash
+bash 02_Assembly/run_flye.sh SAMPLE01
+```
+Input: SAMPLE01.nohuman.fastq (Long-read QC output)
+Output: SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
+
+**Short-read and Hybrid assembly (OPERA-MS with SPAdes output)** 
+Run OPERA-MS to perform hybrid assembly using short and long reads. 
+The short-read assembly output comes from SPAdes (stored in spades_assembly/contigs.fasta).
+```bash
+bash 02_Assembly/run_operams.sh \
+  /path/to/SAMPLE01.nohuman.fastq \
+  /path/to/SAMPLE01_1.nohuman.fq.gz \
+  /path/to/SAMPLE01_2.nohuman.fq.gz \
+  02_Assembly/out/SAMPLE01_hybrid
+```
+Input:
+SAMPLE01.nohuman.fastq (long-read)
+SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read)
+Output: 
+SAMPLE01_hybrid/intermediate_files/spades_assembly/contigs.fasta (SPAdes output, short-read only)
+SAMPLE01_hybrid/contigs.polished.fasta (OPERA-MS hybrid assembly output, combining short- and long-reads)
+
 ---
 
 - `03_Binning/` : Binning workflows (MetaBAT, MaxBin, etc.)
