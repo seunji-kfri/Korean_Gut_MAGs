@@ -107,7 +107,7 @@ bash 03_Binning/run_metawrap.sh SAMPLE01 short_srr_1
   - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (hybrid assembly)
 
 - Output: 
-  - Binning and refinement results saved to 03_Binning/out/SAMPLE01/SAMPLE01.bins
+  - Binning and refinement results saved to 03_Binning/out/SAMPLE01.bins
 
 Note:
 The second argument, short_srr_1, refers to the prefix of your short-read files.
@@ -115,7 +115,6 @@ For example, if your files are named SAMPLE01_1.nohuman.fq.gz and SAMPLE01_2.noh
 
 ---
 
-- `03_Binning/` : Binning workflows (MetaBAT, MaxBin, etc.)
 - `04_Annotation/` : Functional annotation (Prokka, EggNOG-mapper, etc.)
 - `05_Taxonomy_Analysis/` : Taxonomic classification (GTDB-Tk) and summary scripts
 
