@@ -1,17 +1,17 @@
 #!/bin/bash
-# Usage: run_metawrap.sh <sample_id> <short_srr>
+# Usage: run_metawrap.sh <sample_id> <short_srr_1>
 
 # Activate conda environment (ensure the environment created with 'environment.yml' is available)
 conda activate KoreanGutMAGs  # Ensure this is the environment created with 'environment.yml'
 
 # Define input/output paths based on the directory structure in the project
 ASSEMBLY_DIR=./02_Assembly/out   # Path to assembly results from 02_Assembly
-BINNING_DIR=./03_Binning/out  # Final output directory for binning results (changed to BINNING_DIR)
+BINNING_DIR=./03_Binning/out  # Final output directory for binning results
 FASTQ_DIR=./01_QC/out  # Preprocessed data directory from 01_QC
 
 # Define input/output files
 SAMPLE=$1
-SHORT_SRR=$2
+SHORT_SRR=$2  # short_srr_1 refers to the prefix of your short-read files
 
 # Correct path to the assembly output
 ASSEMBLY=${ASSEMBLY_DIR}/${SAMPLE}_hybrid/contigs_polished.fasta  # Assembly from 02_Assembly (hybrid output)
@@ -44,3 +44,5 @@ metawrap bin_refinement \
 
 # Clean up intermediate files
 rm -f ./reads_1.fastq ./reads_2.fastq $ASSEMBLY
+
+echo "[INFO] Binning and refinement for ${SAMPLE} completed and saved to ${BINNING_DIR}/${SAMPLE}.bins"
