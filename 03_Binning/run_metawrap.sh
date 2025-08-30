@@ -1,5 +1,7 @@
 #!/bin/bash
 # Usage: run_metawrap.sh <sample_id> <short_srr_1>
+# <sample_id> : The ID of the sample (e.g., SAMPLE01)
+# <short_srr_1> : The prefix of your short-read files (e.g., SAMPLE01)
 
 # Activate conda environment (ensure the environment created with 'environment.yml' is available)
 conda activate KoreanGutMAGs  # Ensure this is the environment created with 'environment.yml'
