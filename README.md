@@ -100,7 +100,7 @@ Binning workflows using MetaWRAP.
 
 #### Example usage
 ```bash
-bash 03_Binning/run_metawrap.sh SAMPLE01 short_srr_1
+bash 03_Binning/run_metawrap.sh SAMPLE01 short_srr_1 ./03_Binning/out
 ```
 - Input:
   - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
