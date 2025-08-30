@@ -10,7 +10,7 @@ This repository contains scripts and workflows used in the study:
 - `02_Assembly/` : Hybrid and single-technology assembly scripts
 - `03_Binning/` : Binning workflows (MetaBAT, MaxBin, etc.)
 - `04_Annotation/` : Functional annotation (Prokka, EggNOG-mapper, etc.)
-- `05_Taxonomy_analysis/` : KO, GO, EC, CAZy functional pipelines
+- `05_Taxonomy_Analysis/` : Taxonomic classification (GTDB-Tk) and summary scripts
 
 ---
 
