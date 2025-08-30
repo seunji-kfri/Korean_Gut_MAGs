@@ -1,7 +1,16 @@
+#!/bin/bash
+
+# Number of threads (adjust as necessary)
 CPU=40
-. ~/enable_conda.rc
-conda activate operams
-T=/tmp/op_${4##*/}
-operams --short-read-assembler spades --long-read $1 --short-read1 $2 --short-read2 $3 --out-dir $T --num-processors $CPU &> ${4##*/}.log
-mkdir -p ${4%/*} && mv -f /tmp/op_${4##*/} $4
+
+# Activate operams conda environment (make sure the environment is created with 'environment.yml')
+conda activate KoreanGutMAGs   # Example: Change this to the actual environment name
+
+# Define output directory
+OUTPUT_DIR=$4   # The final output directory (user-defined)
+
+# Run OPERA-MS assembly (SPAdes + long-read)
+operams --short-read-assembler spades --long-read $1 --short-read1 $2 --short-read2 $3 --out-dir $OUTPUT_DIR --num-processors $CPU &> ${OUTPUT_DIR##*/}.log
+
+# Deactivate conda environment
 conda deactivate
