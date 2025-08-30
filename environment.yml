@@ -18,6 +18,7 @@ dependencies:
   - prokka  # Prokka for genome annotation
   - eggnog-mapper  # EggNOG Mapper for functional annotation
   - operams  # OPERA-MS for hybrid assembly
+  - gtdbtk
   - biopython
   - gcc
   - openjdk  # Required for some tools like EggNOG Mapper
