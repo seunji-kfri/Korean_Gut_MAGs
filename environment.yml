@@ -2,17 +2,22 @@ name: KoreanGutMAGs
 channels:
   - bioconda
   - conda-forge
-  - defaults
 dependencies:
-  - python>=3.10
-  - trimmomatic
+  - python=3.8
+  - numpy
+  - pandas
+  - seqkit
   - bowtie2
   - samtools
-  - seqkit
-  - minimap2
-  - filtlong
+  - trimmomatic
   - porechop
+  - filtlong
   - flye
-  - operams
   - spades
-  - r-base   # Optional if R is needed for downstream analysis
+  - metawrap
+  - prokka  # Prokka for genome annotation
+  - eggnog-mapper  # EggNOG Mapper for functional annotation
+  - operams  # OPERA-MS for hybrid assembly
+  - biopython
+  - gcc
+  - openjdk  # Required for some tools like EggNOG Mapper
