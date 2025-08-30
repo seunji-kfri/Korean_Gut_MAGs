@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Long-read preprocessing (ONT)
 # Adapter trimming, Quality filtering, Human read removal, Stats generation
+# Usage: preprocess_longreads.py --sample <sample_id> --in_fastq <input_fastq> --outdir <output_dir> --human_mmi <human_index>
 
 import argparse
 import subprocess
