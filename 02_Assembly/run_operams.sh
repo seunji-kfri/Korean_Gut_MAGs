@@ -3,8 +3,8 @@
 # Number of threads (adjust as necessary)
 CPU=40
 
-# Activate operams conda environment (make sure the environment is created with 'environment.yml')
-conda activate KoreanGutMAGs   # Example: Change this to the actual environment name
+# Activate conda environment (ensure the environment created with 'environment.yml' is available)
+conda activate KoreanGutMAGs  # Ensure this is the environment created with 'environment.yml'
 
 # Define output directory
 OUTPUT_DIR=$4   # The final output directory (user-defined)
