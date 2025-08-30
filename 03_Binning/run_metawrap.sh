@@ -1,14 +1,15 @@
 #!/bin/bash
-# Usage: run_metawrap.sh <sample_id> <short_srr_1>
+# Usage: run_metawrap.sh <sample_id> <short_srr_1> <output_folder>
 # <sample_id> : The ID of the sample (e.g., SAMPLE01)
-# <short_srr_1> : The prefix of your short-read files (e.g., SAMPLE01)
+# <short_srr_1> : The prefix for short-read file 1 (e.g., SAMPLE01_1.nohuman.fq.gz)
+# <output_folder> : The directory where binning results will be saved (e.g., 03_Binning/out)
 
 # Activate conda environment (ensure the environment created with 'environment.yml' is available)
 conda activate KoreanGutMAGs  # Ensure this is the environment created with 'environment.yml'
 
 # Define input/output paths based on the directory structure in the project
 ASSEMBLY_DIR=./02_Assembly/out   # Path to assembly results from 02_Assembly
-BINNING_DIR=./03_Binning/out  # Final output directory for binning results
+BINNING_DIR=$3  # User-defined output directory for binning results
 FASTQ_DIR=./01_QC/out  # Preprocessed data directory from 01_QC
 
 # Define input/output files
@@ -22,7 +23,7 @@ ASSEMBLY=${ASSEMBLY_DIR}/${SAMPLE}_hybrid/contigs_polished.fasta  # Assembly fro
 FASTQ1_ORIG=${FASTQ_DIR}/${SHORT_SRR}_1.nohuman.fq.gz
 FASTQ2_ORIG=${FASTQ_DIR}/${SHORT_SRR}_2.nohuman.fq.gz
 
-# Create necessary directories for final output
+# Create necessary directories for final output (if not already created)
 mkdir -p $BINNING_DIR/${SAMPLE}
 
 # Unzip the fastq files
