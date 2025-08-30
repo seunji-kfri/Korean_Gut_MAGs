@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Short-read preprocessing (Illumina PE)
 # Trimming, Human read removal, Stats generation
+# Usage: preprocess_shortreads.py --sample <sample_id> --r1 <R1_fastq> --r2 <R2_fastq> --outdir <output_dir> --trimmomatic_adapters <adapters_file> --human_bowtie2_index <index_path>
 
 import argparse
 import subprocess
