@@ -8,7 +8,7 @@ This repository contains scripts and workflows used in the study:
 ## 📂 Repository Structure
 
 ### 01_QC/
-Illumina short-read and ONT long-read preprocessing pipelines.
+Preprocessing pipelines for Illumina short-read and ONT long-read data.
 
 - **`preprocess_shortreads.py`**  
   Short-read preprocessing pipeline for Illumina reads:  
