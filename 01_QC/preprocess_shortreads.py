@@ -1,67 +1,123 @@
 #!/usr/bin/env python3
-import os
-import sys
-import shutil
+"""
+Short-read preprocessing (Illumina PE)
+
+Steps:
+  1) Adapter/quality trimming (Trimmomatic)
+  2) Remove human reads (Bowtie2 vs human reference) -> keep UNMAPPED pairs
+  3) Basic stats (seqkit)
+
+Usage:
+  python preprocess_shortreads.py \
+    --sample SAMPLE01 \
+    --r1 /path/to/SAMPLE01_R1.fastq.gz \
+    --r2 /path/to/SAMPLE01_R2.fastq.gz \
+    --outdir ./preprocess_out \
+    --trimmomatic_adapters /path/to/TruSeq3-PE.fa \
+    --human_bowtie2_index /path/to/human_bowtie2_index_prefix \
+    --threads 16
+
+Requirements:
+  - trimmomatic, bowtie2, samtools, seqkit
+  - (optional) pigz
+
+Notes:
+  - Bowtie2 produces unmapped paired FASTQs via --un-conc-gz <prefix>
+  - We then rename them to <sample>_1.nohuman.fq.gz and <sample>_2.nohuman.fq.gz
+"""
+
+import argparse
 import subprocess
-import os.path as path
+import os
+from pathlib import Path
 
-# Arguments
-if len(sys.argv) < 2:
-    print("Usage: python preprocess_shortreads.py <sample_id>")
-    sys.exit(1)
+def run(cmd, log=None):
+    print(f"[RUN] {cmd}")
+    res = subprocess.run(cmd, shell=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"Command failed (exit {res.returncode}): {cmd}")
+    if log:
+        with open(log, "a") as f:
+            f.write(cmd + "\n")
 
-sample_id = sys.argv[1].strip()
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sample", required=True, help="Sample ID")
+    ap.add_argument("--r1", required=True, help="Input R1 FASTQ(.gz)")
+    ap.add_argument("--r2", required=True, help="Input R2 FASTQ(.gz)")
+    ap.add_argument("--outdir", required=True, help="Output directory")
+    ap.add_argument("--trimmomatic_path", default="trimmomatic", help="trimmomatic executable (default: trimmomatic)")
+    ap.add_argument("--trimmomatic_adapters", required=True, help="Adapter fasta (e.g., TruSeq3-PE.fa)")
+    ap.add_argument("--human_bowtie2_index", required=True, help="Bowtie2 index prefix for human (e.g., /db/human/hg38)")
+    ap.add_argument("--threads", type=int, default=8)
+    # Trimmomatic knobs
+    ap.add_argument("--minlen", type=int, default=50)
+    ap.add_argument("--leading", type=int, default=3)
+    ap.add_argument("--trailing", type=int, default=3)
+    ap.add_argument("--window", type=int, default=4)
+    ap.add_argument("--qual", type=int, default=15)
+    args = ap.parse_args()
 
-# Paths
-rawdata_dir = '/home/caefs/microbiome/projects/metagenome_analysis/China/rawread'
-shortreads_dir = f'{rawdata_dir}'
-shortreads_1 = f'{shortreads_dir}/{sample_id}_1.fastq'
-shortreads_2 = f'{shortreads_dir}/{sample_id}_2.fastq'
+    outdir = Path(args.outdir).resolve()
+    outdir.mkdir(parents=True, exist_ok=True)
+    log_file = outdir / f"{args.sample}.preprocess.log"
 
-workdir = '/home/caefs/microbiome/projects/metagenome_analysis/China/preprocess'
-os.makedirs(workdir, exist_ok=True)
+    # 1) Trimming
+    trimmed_1 = outdir / f"{args.sample}_1.trim.fq.gz"
+    trimmed_2 = outdir / f"{args.sample}_2.trim.fq.gz"
+    unpair_1  = outdir / f"{args.sample}_unpair1.fq.gz"
+    unpair_2  = outdir / f"{args.sample}_unpair2.fq.gz"
 
-trimmomatic_path = '/home/caefs/microbiome/jupyconda/envs/metagenome_preprocess/share/trimmomatic-0.39-2'
-human_bowtie_index = '/home/caefs/microbiome/projects/metagenome_analysis/China/resource/human.bowtie2/human'
+    if not (trimmed_1.exists() and trimmed_2.exists()):
+        cmd_trim = (
+            f"{args.trimmomatic_path} PE -threads {args.threads} -phred33 "
+            f"{args.r1} {args.r2} "
+            f"{trimmed_1} {unpair_1} {trimmed_2} {unpair_2} "
+            f"ILLUMINACLIP:{args.trimmomatic_adapters}:2:30:10 "
+            f"LEADING:{args.leading} TRAILING:{args.trailing} "
+            f"SLIDINGWINDOW:{args.window}:{args.qual} MINLEN:{args.minlen}"
+        )
+        run(cmd_trim, log=str(log_file))
+    else:
+        print(f"[SKIP] Trimming exists: {trimmed_1.name}, {trimmed_2.name}")
 
-# Output files
-trimmed_1 = f'{workdir}/{sample_id}_1.fq.gz'
-trimmed_2 = f'{workdir}/{sample_id}_2.fq.gz'
-unpair_1 = f'{workdir}/{sample_id}_unpair1.fq.gz'
-unpair_2 = f'{workdir}/{sample_id}_unpair2.fq.gz'
-nohuman_prefix = f'{workdir}/{sample_id}_nohuman'
-nohuman_1 = f'{workdir}/{sample_id}_1.nohuman.fq.gz'
-nohuman_2 = f'{workdir}/{sample_id}_2.nohuman.fq.gz'
+    # 2) Remove human reads (keep UNMAPPED pairs)
+    # Bowtie2 will write unmapped pairs to <prefix>.1 and <prefix>.2
+    nohuman_prefix = outdir / f"{args.sample}_nohuman"
+    nohuman_1 = outdir / f"{args.sample}_1.nohuman.fq.gz"
+    nohuman_2 = outdir / f"{args.sample}_2.nohuman.fq.gz"
+    bam_out = outdir / f"{args.sample}.human.bam"
 
-# Step 1: Trimming
-if not (os.path.exists(trimmed_1) and os.path.exists(trimmed_2)):
-    cmd = f"trimmomatic PE -threads 8 -phred33 {shortreads_1} {shortreads_2} " \
-          f"{trimmed_1} {unpair_1} {trimmed_2} {unpair_2} " \
-          f"ILLUMINACLIP:{trimmomatic_path}/adapters/TruSeq3-PE.fa:2:30:10 " \
-          f"LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:50"
-    print(f"Running: {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
+    if not (nohuman_1.exists() and nohuman_2.exists()):
+        cmd_bt2 = (
+            f"bowtie2 -p {args.threads} "
+            f"-x {args.human_bowtie2_index} "
+            f"-1 {trimmed_1} -2 {trimmed_2} "
+            f"--very-sensitive "
+            f"--un-conc-gz {nohuman_prefix} "
+            f"| samtools view -b -o {bam_out}"
+        )
+        run(cmd_bt2, log=str(log_file))
 
-# Step 2: Remove human reads
-if not (os.path.exists(nohuman_1) and os.path.exists(nohuman_2)):
-    bam_out = f'{workdir}/{sample_id}.human.bam'
-    cmd = f"bowtie2 -p 20 -x {human_bowtie_index} -1 {trimmed_1} -2 {trimmed_2} " \
-          f"--un-conc-gz {nohuman_prefix} | samtools view -b -o {bam_out}"
-    print(f"Running: {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
+        # Rename unmapped outputs
+        cand1 = str(nohuman_prefix) + ".1"
+        cand2 = str(nohuman_prefix) + ".2"
+        if os.path.exists(cand1):
+            os.replace(cand1, nohuman_1)
+        if os.path.exists(cand2):
+            os.replace(cand2, nohuman_2)
+    else:
+        print(f"[SKIP] No-human outputs exist: {nohuman_1.name}, {nohuman_2.name}")
 
-    # Rename paired output
-    if os.path.exists(f'{nohuman_prefix}.1'):
-        shutil.move(f'{nohuman_prefix}.1', nohuman_1)
-    if os.path.exists(f'{nohuman_prefix}.2'):
-        shutil.move(f'{nohuman_prefix}.2', nohuman_2)
+    # 3) Stats
+    for fq, tag in [(nohuman_1, "R1"), (nohuman_2, "R2")]:
+        stat_out = outdir / f"{args.sample}_{tag}.nohuman.seqstat.txt"
+        if not stat_out.exists():
+            run(f"seqkit stats -a -T {fq} > {stat_out}", log=str(log_file))
+        else:
+            print(f"[SKIP] Stats exist: {stat_out.name}")
 
-# Step 3: Stats for filtered reads
-for fq, outstat in [(nohuman_1, f"{workdir}/{sample_id}_1.nohuman.seqstat.txt"),
-                    (nohuman_2, f"{workdir}/{sample_id}_2.nohuman.seqstat.txt")]:
-    if not os.path.exists(outstat):
-        cmd = f"seqkit stats -a -T {fq} > {outstat}"
-        print(f"Running: {cmd}")
-        subprocess.run(cmd, shell=True, check=True)
+    print("[DONE] Short-read preprocessing complete.")
 
-print(f"[DONE] Preprocessing complete for {sample_id}")
+if __name__ == "__main__":
+    main()
