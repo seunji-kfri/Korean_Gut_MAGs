@@ -116,20 +116,20 @@ For example, if your files are named SAMPLE01_1.nohuman.fq.gz and SAMPLE01_2.noh
 ---
 
 ### 04_Annotation/
-Annotation workflows???.
+Functional annotation of genome bins using Prokka and EggNOG.
 
-- **`run_annotation.sh`**: Perform functional annotation using Prokka and Eggnog????.
+- **`run_annotation.sh`**: A script that performs both **Prokka** and **EggNOG** annotation for genome bins.
 
-#### Example usage
+#### Example usage:
 ```bash
-bash 04_Annotation/run_annotation.sh ???
+bash run_annotation.sh SAMPLE01 SAMPLE01 ./04_Annotation/out
 ```
 - Input:
   - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
-  - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (hybrid assembly)
+  - 03_Binning/out/SAMPLE01/SAMPLE01.bins/refined/metawrap_50_10_bins/bin.*.fa (Binning result files from MetaWRAP)
 
 - Output: 
-  - Binning and refinement results saved to 03_Binning/out/SAMPLE01.bins
+  - Prokka and EggNOG annotation results are saved to ./04_Annotation/out/SAMPLE01/
 
 ---
 
