@@ -36,7 +36,7 @@ python 01_QC/preprocess_shortreads.py \
   --trimmomatic_adapters adapters/TruSeq3-PE.fa \
   --human_bowtie2_index /path/to/human_index
 ```
-Long-reads (default: unmapped only):
+**Long-reads** (default: unmapped only):
 ```bash
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
@@ -44,7 +44,7 @@ python 01_QC/preprocess_longreads.py \
   --outdir preprocess_out \
   --human_mmi /path/to/human.mmi
 ```
-Long-reads with PAF filter (identity ≥80%, coverage ≥30%):
+**Long-reads with PAF filter** (identity ≥80%, coverage ≥30%):
 ```bash
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
