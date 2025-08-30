@@ -6,6 +6,9 @@ This repository contains scripts and workflows used in the study:
 ---
 
 ## 📂 Repository Structure
+
+---
+
 ### 01_QC/
 - `preprocess_shortreads.py`  
   Illumina short-read preprocessing pipeline:  
@@ -29,8 +32,6 @@ python 01_QC/preprocess_shortreads.py \
   --trimmomatic_adapters adapters/TruSeq3-PE.fa \
   --human_bowtie2_index /path/to/human_index
 
----
-
 Long-reads:
 python 01_QC/preprocess_longreads.py \
   --sample SAMPLE01 \
@@ -40,7 +41,11 @@ python 01_QC/preprocess_longreads.py \
 
 ---
 
-- `02_Assembly/` : Hybrid and single-technology assembly scripts
+### 02_Assembly/
+- Hybrid and single-technology assembly scripts
+  
+---
+
 - `03_Binning/` : Binning workflows (MetaBAT, MaxBin, etc.)
 - `04_Annotation/` : Functional annotation (Prokka, EggNOG-mapper, etc.)
 - `05_Taxonomy_Analysis/` : Taxonomic classification (GTDB-Tk) and summary scripts
