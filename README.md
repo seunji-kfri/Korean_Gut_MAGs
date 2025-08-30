@@ -78,9 +78,9 @@ bash 02_Assembly/run_flye.sh SAMPLE01
 **Short-read and Hybrid assembly:** 
 ```bash
 bash 02_Assembly/run_operams.sh \
-  /path/to/SAMPLE01.nohuman.fastq \
-  /path/to/SAMPLE01_1.nohuman.fq.gz \
-  /path/to/SAMPLE01_2.nohuman.fq.gz \
+  01_QC/out/SAMPLE01.nohuman.fastq \
+  01_QC/out/SAMPLE01_1.nohuman.fq.gz \
+  01_QC/out/SAMPLE01_2.nohuman.fq.gz \
   02_Assembly/out/SAMPLE01_hybrid
 ```
 - Input:
@@ -108,6 +108,10 @@ bash 03_Binning/run_metawrap.sh SAMPLE01 short_srr_1
 
 - Output: 
   - Binning and refinement results saved to 03_Binning/out/SAMPLE01/SAMPLE01.bins
+
+Note:
+The second argument, short_srr_1, refers to the prefix of your short-read files.
+For example, if your files are named SAMPLE01_1.nohuman.fq.gz and SAMPLE01_2.nohuman.fq.gz, use SAMPLE01 as the short_srr_1 argument.
 
 ---
 
