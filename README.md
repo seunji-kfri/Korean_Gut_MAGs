@@ -115,8 +115,41 @@ For example, if your files are named SAMPLE01_1.nohuman.fq.gz and SAMPLE01_2.noh
 
 ---
 
-- `04_Annotation/` : Functional annotation (Prokka, EggNOG-mapper, etc.)
-- `05_Taxonomy_Analysis/` : Taxonomic classification (GTDB-Tk) and summary scripts
+### 04_Annotation/
+Annotation workflows???.
+
+- **`run_annotation.sh`**: Perform functional annotation using Prokka and Eggnog????.
+
+#### Example usage
+```bash
+bash 04_Annotation/run_annotation.sh ???
+```
+- Input:
+  - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
+  - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (hybrid assembly)
+
+- Output: 
+  - Binning and refinement results saved to 03_Binning/out/SAMPLE01.bins
+
+---
+
+### 05_Taxonomy_Analysis/
+???.
+
+- **`run_gtdbkt.sh`**: Perform functional annotation using Prokka and Eggnog????.
+
+#### Example usage
+```bash
+bash 04_Annotation/run_annotation.sh ???
+```
+- Input:
+  - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read files)
+  - 02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta (hybrid assembly)
+
+- Output: 
+  - Binning and refinement results saved to 03_Binning/out/SAMPLE01.bins
+
+---
 
 ## 🔧 Required resources (not included in this repo)
 1) Trimmomatic adapters (TruSeq3-PE.fa)  
