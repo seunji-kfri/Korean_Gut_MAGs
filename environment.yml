@@ -1,0 +1,15 @@
+name: KoreanGutMAGs
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10
+  - trimmomatic
+  - bowtie2
+  - samtools
+  - seqkit
+  - minimap2
+  - filtlong
+  - porechop
+
