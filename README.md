@@ -8,14 +8,16 @@ This repository contains scripts and workflows used in the study:
 ## 📂 Repository Structure
 
 ### 01_QC/
-- `preprocess_shortreads.py`  
-  Illumina short-read preprocessing pipeline:  
+Illumina short-read and ONT long-read preprocessing pipelines.
+
+- **`preprocess_shortreads.py`**  
+  Short-read preprocessing pipeline for Illumina reads:  
   - Trimming (Trimmomatic)  
   - Human read removal (Bowtie2)  
   - Sequence statistics (seqkit)
 
-- `preprocess_longreads.py`  
-  ONT long-read preprocessing pipeline:  
+- **`preprocess_longreads.py`**  
+  Long-read preprocessing pipeline for ONT reads:  
   - Adapter trimming (Porechop)  
   - Quality filtering (Filtlong)  
   - Human read removal  
@@ -24,7 +26,8 @@ This repository contains scripts and workflows used in the study:
   - Sequence statistics (seqkit)
 
 #### Example usage
-Short-reads:
+
+**Short-reads:**
 ```bash
 python 01_QC/preprocess_shortreads.py \
   --sample SAMPLE01 \
@@ -68,9 +71,8 @@ Run Flye to assemble ONT long-reads.
 ```bash
 bash 02_Assembly/run_flye.sh SAMPLE01
 ```
-Input: SAMPLE01.nohuman.fastq (Long-read QC output)
-
-Output: SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
+- Input: SAMPLE01.nohuman.fastq (Long-read QC output)
+- Output: SAMPLE01/contigs.fasta (Flye assembly output, long-read only)
 
 **Short-read and Hybrid assembly (OPERA-MS with SPAdes output)** 
 Run OPERA-MS to perform hybrid assembly using short and long reads. 
@@ -82,13 +84,13 @@ bash 02_Assembly/run_operams.sh \
   /path/to/SAMPLE01_2.nohuman.fq.gz \
   02_Assembly/out/SAMPLE01_hybrid
 ```
-Input:
-SAMPLE01.nohuman.fastq (long-read)
-SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read)
+- Input:
+  - SAMPLE01.nohuman.fastq (long-read)
+  - SAMPLE01_1.nohuman.fq.gz, SAMPLE01_2.nohuman.fq.gz (short-read)
 
-Output: 
-SAMPLE01_hybrid/intermediate_files/spades_assembly/contigs.fasta (SPAdes output, short-read only)
-SAMPLE01_hybrid/contigs.polished.fasta (OPERA-MS hybrid assembly output, combining short- and long-reads)
+- Output: 
+  - SAMPLE01_hybrid/intermediate_files/spades_assembly/contigs.fasta (SPAdes output, short-read only)
+  - SAMPLE01_hybrid/contigs.polished.fasta (OPERA-MS hybrid assembly output, combining short- and long-reads)
 
 ---
 
