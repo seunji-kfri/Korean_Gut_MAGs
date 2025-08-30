@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Short-read preprocessing (Illumina PE)
-# Trimming, Human read removal, Stats generation
+# Long-read preprocessing (ONT)
+# Adapter trimming, Quality filtering, Human read removal, Stats generation
 
 import argparse
 import subprocess
@@ -17,36 +17,28 @@ def run(cmd, log=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sample", required=True)
-    ap.add_argument("--r1", required=True)
-    ap.add_argument("--r2", required=True)
+    ap.add_argument("--in_fastq", required=True)
     ap.add_argument("--outdir", required=True)
-    ap.add_argument("--trimmomatic_adapters", required=True)
-    ap.add_argument("--human_bowtie2_index", required=True)
-    ap.add_argument("--threads", type=int, default=8)
+    ap.add_argument("--human_mmi", required=True)
+    ap.add_argument("--threads", type=int, default=20)
     args = ap.parse_args()
 
     outdir = Path(args.outdir).resolve()
     outdir.mkdir(parents=True, exist_ok=True)
     log_file = outdir / f"{args.sample}.preprocess.log"
 
-    # Trimming step
-    trimmed_1 = outdir / f"{args.sample}_1.trim.fq.gz"
-    trimmed_2 = outdir / f"{args.sample}_2.trim.fq.gz"
-    if not (trimmed_1.exists() and trimmed_2.exists()):
-        cmd_trim = f"trimmomatic PE -threads {args.threads} {args.r1} {args.r2} {trimmed_1} {trimmed_2} ILLUMINACLIP:{args.trimmomatic_adapters}:2:30:10"
-        run(cmd_trim, log=str(log_file))
+    # Adapter trimming (optional)
+    porechop_out = outdir / f"{args.sample}.porechop.fastq.gz"
+    if not porechop_out.exists():
+        run(f"porechop -i {args.in_fastq} -o {porechop_out} -t {args.threads}", log=str(log_file))
 
-    # Human read removal (Bowtie2)
-    nohuman_1 = outdir / f"{args.sample}_1.nohuman.fq.gz"
-    nohuman_2 = outdir / f"{args.sample}_2.nohuman.fq.gz"
-    if not (nohuman_1.exists() and nohuman_2.exists()):
-        cmd_bt2 = f"bowtie2 -p {args.threads} -x {args.human_bowtie2_index} -1 {trimmed_1} -2 {trimmed_2} --un-conc-gz {outdir}/{args.sample}_nohuman"
-        run(cmd_bt2, log=str(log_file))
+    # Quality filtering (filtlong)
+    filtlong_out = outdir / f"{args.sample}.filtlong.fastq.gz"
+    run(f"filtlong --min_length 1000 --keep_percent 95 {porechop_out} | gzip > {filtlong_out}", log=str(log_file))
 
-    # Stats generation
-    stat_out = outdir / f"{args.sample}.nohuman.seqstat.txt"
-    if not stat_out.exists():
-        run(f"seqkit stats -a -T {nohuman_1} > {stat_out}", log=str(log_file))
+    # Human read removal (Minimap2)
+    bam_out = outdir / f"{args.sample}.human.bam"
+    run(f"minimap2 -t {args.threads} -x map-ont {args.human_mmi} {filtlong_out} | samtools view -b -o {bam_out}", log=str(log_file))
 
 if __name__ == "__main__":
     main()
