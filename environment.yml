@@ -12,4 +12,7 @@ dependencies:
   - minimap2
   - filtlong
   - porechop
-
+  - flye
+  - operams
+  - spades
+  - r-base   # Optional if R is needed for downstream analysis
