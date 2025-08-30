@@ -7,8 +7,6 @@ This repository contains scripts and workflows used in the study:
 
 ## 📂 Repository Structure
 
----
-
 ### 01_QC/
 - `preprocess_shortreads.py`  
   Illumina short-read preprocessing pipeline:  
