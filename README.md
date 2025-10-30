@@ -133,7 +133,11 @@ bash 04_Annotation/run_annotation.sh SAMPLE01 SAMPLE01 ./04_Annotation/out
 
 ---
 
-### 05_Taxonomy_Analysis/
+### 05_Pangenome/
+
+---
+
+### 06_Taxonomy_Analysis/
 Taxonomic classification using GTDB-Tk.
 
 This section uses **GTDB-Tk** to perform taxonomic classification of genome bins.
@@ -155,6 +159,7 @@ gtdbtk classify_wf \
 
 - Output: 
   - Taxonomic classification results saved to ./04_Taxonomy/out
+
 ---
 
 ## 🔧 Required resources (not included in this repo)
