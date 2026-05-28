@@ -9,11 +9,38 @@ The pipeline (i) builds a Korean-specific gut metagenome-assembled genome (MAG)
 catalog through hybrid (short- + long-read) assembly, and (ii) uses an
 XGBoost-based machine learning framework to predict MAG cluster abundances from
 16S rRNA amplicon sequence variants (ASVs) and convert them into KEGG Orthology
-(KO) functional profiles. This lets functional profiles be inferred from
+(KO) functional profiles. This allows functional profiles to be inferred from
 amplicon-only cohorts without paired shotgun sequencing.
 
 > **Citation:** Manuscript in preparation / under review. Citation details and
 > DOI will be added here upon publication.
+
+---
+
+## Quick start: apply the trained model to your own amplicon data
+
+If you only want to infer KO functional profiles from your own 16S ASV table,
+you do **not** need any of the cohort data below. You need three things, two of
+which are already in this repository:
+
+1. your ASV relative-abundance table (first column = ASV id, other columns = samples),
+2. `07_ML_Prediction/models/full_xgb_models.rds` (the trained model, included), and
+3. `07_ML_Prediction/models/ko_cluster_table.tsv` (the carrier table, included).
+
+```bash
+Rscript 07_ML_Prediction/predict.R \
+  --asv     your_asv_relabund.csv \
+  --models  07_ML_Prediction/models/full_xgb_models.rds \
+  --carrier 07_ML_Prediction/models/ko_cluster_table.tsv \
+  --out     predicted_sample_x_ko.tsv
+```
+
+The output is a sample × KO relative-abundance table. ASVs that are not in the
+training feature set are ignored; training ASVs absent from your table are
+zero-padded. See the `07_ML_Prediction/` section for details and options.
+
+Reproducing the full analysis (training, benchmarking, biology) additionally
+requires cohort-level input data — see "Input data for full reproduction" below.
 
 ---
 
@@ -29,41 +56,34 @@ Korean_Gut_MAGs/
 ├── 06_Linking/            ASV–MAG linking (reference-based baseline)
 ├── 07_ML_Prediction/      Two-step ML framework (main method)
 │   ├── config.R           Shared paths & parameters (edit this one file)
+│   ├── 01_train_step1_cluster.R   Step 1: ASV → cluster (XGBoost, CV)
+│   ├── 02_predict_step2_ko.R      Step 2: cluster → KO (carrier matrix)
+│   ├── 03_benchmark.R             Benchmark vs link/PICRUSt2 (Fig. 2/4/S5)
+│   ├── 04_external_apply.R        Train full model + apply to new cohort (Fig. 4)
+│   ├── 05_biology.R               MASLD pathway interpretation (Fig. 5)
 │   ├── predict.R          Standalone prediction tool (apply trained model)
-│   ├── 04_external_apply.R  Train full-cohort model + apply to a new cohort
-│   └── models/            Pre-trained model + carrier table (reusable assets)
+│   ├── design_choices/    Design-choice analyses (Fig. 3)
+│   └── models/            Pre-trained model + carrier table (reusable)
 ├── environment.yml        Conda environment (assembly/annotation tools)
 └── README.md
 ```
 
-The pipeline has two parts. **Sections 01–05** reconstruct and annotate the MAG
-catalog. **Sections 06–07** infer functional profiles from amplicon data:
-`06_Linking` is the reference-matching baseline, and `07_ML_Prediction` is the
-machine-learning framework that is the main contribution of the study.
+Sections 01–05 reconstruct and annotate the MAG catalog. Sections 06–07 infer
+functional profiles from amplicon data: `06_Linking` is the reference-matching
+baseline, and `07_ML_Prediction` is the machine-learning framework that is the
+main contribution of the study.
 
 ---
 
 ### 01_QC/
 Preprocessing pipelines for Illumina short-read and ONT long-read data.
 
-- **`preprocess_shortreads.py`**
-  Short-read preprocessing pipeline for Illumina reads:
-  - Trimming (Trimmomatic)
-  - Human read removal (Bowtie2)
-  - Sequence statistics (seqkit)
+- **`preprocess_shortreads.py`** — Illumina reads: trimming (Trimmomatic),
+  human read removal (Bowtie2), sequence statistics (seqkit).
+- **`preprocess_longreads.py`** — ONT reads: adapter trimming (Porechop),
+  quality filtering (Filtlong), human read removal (default: keep unmapped
+  reads; option: PAF-based filter, identity ≥80%, coverage ≥30%), seqkit stats.
 
-- **`preprocess_longreads.py`**
-  Long-read preprocessing pipeline for ONT reads:
-  - Adapter trimming (Porechop)
-  - Quality filtering (Filtlong)
-  - Human read removal
-    - **Default**: keep unmapped reads only (samtools -f 4)
-    - **Option**: PAF-based filtering (identity ≥80%, coverage ≥30%)
-  - Sequence statistics (seqkit)
-
-#### Example usage
-
-**Short-reads:**
 ```bash
 python 01_QC/preprocess_shortreads.py \
   --sample SAMPLE01 \
@@ -71,132 +91,78 @@ python 01_QC/preprocess_shortreads.py \
   --outdir 01_QC/out \
   --trimmomatic_adapters adapters/TruSeq3-PE.fa \
   --human_bowtie2_index /path/to/human_index
-```
-**Long-reads** (default: unmapped only):
-```bash
+
 python 01_QC/preprocess_longreads.py \
-  --sample SAMPLE01 \
-  --in_fastq SAMPLE01.fastq.gz \
-  --outdir 01_QC/out \
-  --human_mmi /path/to/human.mmi
-```
-**Long-reads with PAF filter** (identity ≥80%, coverage ≥30%):
-```bash
-python 01_QC/preprocess_longreads.py \
-  --sample SAMPLE01 \
-  --in_fastq SAMPLE01.fastq.gz \
-  --outdir 01_QC/out \
-  --human_mmi /path/to/human.mmi \
-  --paf_filter 80 30 \
-  --paf_parser 01_QC/paf_parser.py
+  --sample SAMPLE01 --in_fastq SAMPLE01.fastq.gz \
+  --outdir 01_QC/out --human_mmi /path/to/human.mmi
 ```
 
 ---
 
 ### 02_Assembly/
-Assembly workflows for short-read, long-read, and hybrid assemblies.
+- **`run_flye.sh`** — long-read assembly (Flye)
+- **`run_operams.sh`** — short-read and hybrid assembly (OPERA-MS)
 
-- **`run_flye.sh`**: Long-read assembly using Flye
-- **`run_operams.sh`**: Short-read and hybrid assembly using OPERA-MS
-
-#### Example usage
-
-**Long-read assembly:**
 ```bash
 bash 02_Assembly/run_flye.sh SAMPLE01 ./02_Assembly/out/SAMPLE01_long
-```
-- Input: `SAMPLE01.nohuman.fastq` (long-read QC output)
-- Output: `02_Assembly/out/SAMPLE01_long/contigs_polished.fasta`
-
-**Short-read and hybrid assembly:**
-```bash
 bash 02_Assembly/run_operams.sh \
   01_QC/out/SAMPLE01.nohuman.fastq \
   01_QC/out/SAMPLE01_1.nohuman.fq.gz \
   01_QC/out/SAMPLE01_2.nohuman.fq.gz \
   02_Assembly/out/SAMPLE01_hybrid
 ```
-- Input: `SAMPLE01.nohuman.fastq` (long-read);
-  `SAMPLE01_1.nohuman.fq.gz`, `SAMPLE01_2.nohuman.fq.gz` (short-read)
-- Output:
-  - `02_Assembly/out/SAMPLE01_hybrid/spades_assembly/contigs.fasta` (short-read only)
-  - `02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta` (hybrid)
 
 ---
 
 ### 03_Binning/
-Binning workflows using MetaWRAP.
+- **`run_metawrap.sh`** — binning and refinement (MetaWRAP).
 
-- **`run_metawrap.sh`**: Perform binning and refinement using MetaWRAP.
-
-#### Example usage
 ```bash
 bash 03_Binning/run_metawrap.sh SAMPLE01 short_srr_1 ./03_Binning/out
 ```
-- Input: `SAMPLE01_1.nohuman.fq.gz`, `SAMPLE01_2.nohuman.fq.gz` (short-read);
-  `02_Assembly/out/SAMPLE01_hybrid/contigs_polished.fasta` (hybrid assembly)
-- Output: binning and refinement results in `03_Binning/out/SAMPLE01.bins`
-
-> Note: the second argument `short_srr_1` is the prefix of your short-read
-> files. For `SAMPLE01_1.nohuman.fq.gz` / `SAMPLE01_2.nohuman.fq.gz`, use
-> `SAMPLE01`.
+The second argument is the prefix of your short-read files
+(`SAMPLE01_1.nohuman.fq.gz` / `SAMPLE01_2.nohuman.fq.gz` → `SAMPLE01`).
 
 ---
 
 ### 04_Annotation/
-Functional annotation of genome bins using Prokka and eggNOG-mapper.
+- **`run_annotation.sh`** — Prokka + eggNOG annotation for genome bins.
 
-- **`run_annotation.sh`**: Runs both **Prokka** and **eggNOG** annotation for
-  genome bins.
-
-#### Example usage
 ```bash
 bash 04_Annotation/run_annotation.sh SAMPLE01 SAMPLE01 ./04_Annotation/out
 ```
-- Input: short-read files; `bin.*.fa` from MetaWRAP refinement
-- Output: Prokka and eggNOG annotation in `./04_Annotation/out/SAMPLE01/`
 
 ---
 
 ### 05_Taxonomy/
-Taxonomic classification of genome bins using GTDB-Tk.
+Taxonomic classification of genome bins using GTDB-Tk (GTDB r226 database).
 
-#### Example usage
+- **`run_gtdbtk.sh`** — wraps `gtdbtk classify_wf`.
+
 ```bash
-gtdbtk classify_wf \
-  --genome_dir ./03_Binning/out/SAMPLE01.bins/refined/metawrap_50_10_bins \
-  --out_dir ./05_Taxonomy/out \
-  -x fna \
-  --cpus 40 \
-  --pplacer_cpus 10 \
-  --keep_intermediates \
-  --write_single_copy_genes \
-  --skip_ani_screen
+export GTDBTK_DATA_PATH=/path/to/gtdbtk/db
+bash 05_Taxonomy/run_gtdbtk.sh <genome_dir> 05_Taxonomy/out allbins
 ```
-- Input: binned genome files (`bin.*.fa`)
-- Output: taxonomic classification in `./05_Taxonomy/out`
+- Input: binned genome files (`bin.*.fna`)
+- Output: GTDB-Tk classification (`allbins.bac120.summary.tsv`, etc.)
 
 ---
 
 ### 06_Linking/
 Reference-based (link) functional inference: ASVs are linked to MAGs via their
-16S rRNA genes, and KO content is aggregated across linked MAGs. This serves as
-the baseline against which the machine-learning framework is compared
-(manuscript Fig. S2).
+16S rRNA genes, and KO content is aggregated across linked MAGs. This is the
+baseline against which the ML framework is compared (Fig. S2; benchmarked in
+`07_ML_Prediction/03_benchmark.R`).
 
-- **`build_asv_features.py`**: builds per-ASV KO presence features from
-  per-bin annotations (completeness-weighted or binary), used as input to the
-  linking analysis.
+- **`build_asv_features.py`** — builds per-ASV KO presence features from per-bin
+  annotations (completeness-weighted or binary).
+- **`01_build_linked_tables.R`** — sample × KO tables for six linking configs.
+- **`02_run_maaslin2.R`** — MaAsLin2 differential abundance per config + gold.
+- **`03_run_wilcoxon.R`** — per-KO Wilcoxon test per config + gold.
+- **`04_compute_metrics.R`** — F1 vs gold and per-sample Spearman similarity.
 
-#### Example usage
-```bash
-python 06_Linking/build_asv_features.py \
-  --basedir /path/to/per_ASV_folders \
-  --annotation_base /path/to/annotation_root \
-  --mode binary
-```
-- Input: per-ASV folders containing `binsummary.txt` (and optional Roary output)
-- Output: `asv_ko_*.csv`, `asv_keggmodule_*.csv` (ASV × KO/module tables)
+Run in order (`01` → `02` → `03` → `04`) from the repository root, after placing
+the required inputs in `06_Linking/input/` (see below).
 
 ---
 
@@ -207,73 +173,54 @@ binary carrier matrix converts predicted cluster abundances into KO profiles
 (Step 2). The model is trained once on the paired internal cohort and can then
 be applied to any amplicon-only cohort.
 
-```
-07_ML_Prediction/
-├── config.R               Shared paths & parameters — edit ONLY this file
-├── predict.R              Standalone tool: apply the trained model to new ASVs
-├── 04_external_apply.R    Train full-cohort model and apply to a new cohort
-├── models/
-│   ├── full_xgb_models.rds    Pre-trained XGBoost models (trained on 224 samples)
-│   └── ko_cluster_table.tsv   Cluster × KO carrier table (carrier_frac column)
-├── input/                 User-supplied data (not tracked; see "Input data")
-└── output/                Generated results (not tracked)
-```
-
 #### Configuration
-All paths and parameters live in **`config.R`**. To run the pipeline elsewhere,
-either run R from the repository root, or set the root explicitly:
+All paths and parameters live in **`config.R`**. Run R from the repository root,
+or set the root explicitly:
 ```bash
 export KGM_ROOT=/path/to/Korean_Gut_MAGs
 ```
-No other file needs editing unless your input file names differ (edit the
-`FILES` list in `config.R`).
+Only edit the `FILES` list in `config.R` if your input file names differ.
 
-#### Quick start — apply the trained model to your own amplicon data
-`predict.R` is the external-facing entry point. Given a 16S ASV
-relative-abundance table, it outputs an inferred sample × KO profile using the
-pre-trained model and carrier table in `models/` — no retraining required.
-```bash
-Rscript 07_ML_Prediction/predict.R \
-  --asv     your_asv_relabund.csv \
-  --models  07_ML_Prediction/models/full_xgb_models.rds \
-  --carrier 07_ML_Prediction/models/ko_cluster_table.tsv \
-  --out     predicted_sample_x_ko.tsv
-```
-Optional arguments: `--prev prev10|prev20` (model set, default `prev10`),
-`--thr 0.25` (carrier-fraction threshold, default 0.25).
+#### Scripts and the figures they produce
+| Script | Purpose | Manuscript |
+|--------|---------|-----------|
+| `01_train_step1_cluster.R` | ASV → cluster, 5-fold CV (XGBoost) | Step 1 |
+| `02_predict_step2_ko.R` | cluster → KO via carrier matrix; F1 vs gold | Step 2 |
+| `03_benchmark.R` | XGB vs link vs PICRUSt2 (MaAsLin2, Age/Sex/BMI adj.) | Fig. 2/4/S5 |
+| `04_external_apply.R` | train full model, apply to external cohort | Fig. 4 |
+| `05_biology.R` | MASLD pathway enrichment & interpretation | Fig. 5 |
+| `design_choices/claim1_ko_specificity.R` | ML benefit by KO specificity | Fig. 3G |
+| `design_choices/claim2_nonlinearity.R` | XGB vs Ridge (non-linearity) | Fig. 3B-E |
+| `design_choices/claim3_cluster_resolution.R` | dRep95 vs dRep99 | Fig. 3A |
+| `design_choices/claim4_aggregation.R` | binary carrier vs FPKM | Fig. 3F |
+| `predict.R` | standalone tool to apply the trained model | — |
 
-**Input ASV table format:** CSV/TSV with the first column = ASV id and the
-remaining columns = samples; values are per-sample relative abundance. ASVs
-absent from the user table are zero-padded; ASVs not seen during training are
-ignored.
+Typical reproduction order: `01` → `02` → `03` → `05`, then the
+`design_choices/` scripts; `04` trains the full-cohort model and applies it to
+an external cohort.
 
-#### Reproducing the cross-cohort analysis
-`04_external_apply.R` trains the full-cohort model on the internal paired data,
-saves it to `models/`, applies it to an independent amplicon-only cohort, and
-computes the cross-cohort consistency statistics (manuscript Fig. 4).
-```bash
-Rscript 07_ML_Prediction/04_external_apply.R
-```
-This requires the input data described below to be present in
-`07_ML_Prediction/input/`.
-
-#### Input data (not included in this repository)
+#### Input data for full reproduction (not included)
 The trained model and carrier table in `models/` are sufficient for `predict.R`.
-Reproducing the full analysis additionally requires the following per-sample
-tables in `07_ML_Prediction/input/` (cohort/participant-level data, available
-from the authors on reasonable request):
+Full reproduction additionally requires the following per-sample tables in
+`07_ML_Prediction/input/` (and the analogous files in `06_Linking/input/`).
+These contain cohort/participant-level data and are available from the authors
+on reasonable request.
 
-| File | Description |
-|------|-------------|
-| `ASV_RA_224.csv` | Internal cohort ASV × sample relative abundance |
-| `drep_95_bigliver_hybrid.csv` | Genome → dRep95 cluster map |
-| `taxonomy_cpm_pivot_gtdb.csv` | Per-sample MAG CPM abundance |
-| `sample_meta.csv` | Internal sample metadata (`sample_id`, `group`) |
-| `all_bins_KEGG_ko_FPKM_pivot.csv` | Per-bin KO FPKM (for carrier profile) |
-| `fpkm_gold_long.csv` | Shotgun-derived gold KO abundance |
-| `ASV_RA_external.csv` | External cohort ASV table |
-| `meta_external.csv` | External sample metadata |
-| `pic_rel.csv`, `picrust2_ext_ko.tsv` | PICRUSt2 profiles (for benchmarking) |
+| File | Format (key columns) |
+|------|----------------------|
+| `ASV_RA_224.csv` | first column `ASV`; remaining columns = sample IDs; values = relative abundance |
+| `ASV_RA_external.csv` | same layout, external cohort |
+| `drep_95_bigliver_hybrid.csv` | `genome` (e.g. `<bin>.fna`), `secondary_cluster` |
+| `taxonomy_cpm_pivot_gtdb.csv` | `sample_id`, `bin_id`, `CPM_RA` (long) |
+| `all_bins_KEGG_ko_FPKM_pivot.csv` | first column `bin_id`; remaining columns = KO ids (FPKM) |
+| `fpkm_gold_long.csv` | `sample_id`, `KO`, `fpkm_sum` (shotgun gold, long) |
+| `sample_meta.csv` | `sample_id`, `group` (Healthy/MASLD), `Age`, `Sex`, `BMI` |
+| `meta_external.csv` | `sample_id`, `group`, `Age`/`AgeGroup`, `Sex`, `BMI` |
+| `pic_rel.csv`, `picrust2_ext_ko.tsv` | first column = sample id; KO columns (PICRUSt2) |
+| `ko_pathway_hierarchy_merged.csv` | `feature` (KO), `Pathway`, `Level1`, `Level2`, `Level3` |
+
+Generated outputs and intermediate tables are written under each section's
+`output/` directory and are git-ignored (see `.gitignore`).
 
 ---
 
@@ -281,6 +228,7 @@ from the authors on reasonable request):
 1) Trimmomatic adapters (`TruSeq3-PE.fa`) — provided with Trimmomatic.
 2) Human reference indexes (GRCh38 or T2T-CHM13 FASTA) — build a Bowtie2 index
    (`bowtie2-build`) and a Minimap2 index (`minimap2 -d`).
+3) GTDB-Tk release database (set `GTDBTK_DATA_PATH`).
 
 ---
 
@@ -293,10 +241,9 @@ conda activate KoreanGutMAGs
 ```
 
 **R (sections 06–07):** R ≥ 4.3 with `data.table`, `tidyverse`, `xgboost`,
-`glmnet`, and `Maaslin2`. For example:
+`glmnet`, and `Maaslin2`:
 ```r
 install.packages(c("data.table", "tidyverse", "xgboost", "glmnet"))
-# Maaslin2 from Bioconductor:
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install("Maaslin2")
 ```
