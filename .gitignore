@@ -1,0 +1,39 @@
+# =============================================================================
+# .gitignore  --  Korean_Gut_MAGs
+# Keep the repo to code + small reusable assets (trained model, carrier table).
+# Large generated outputs and per-sample data are regenerated and not committed.
+# =============================================================================
+
+# Generated outputs / intermediates
+**/output/
+**/output_*/
+*sample_x_ko*.tsv
+*sample_x_ko*.csv
+**/maaslin2/
+**/maaslin_*/
+
+# User-supplied input data (cohort/patient-level; format described in README)
+07_ML_Prediction/input/
+06_Linking/input/
+
+# Large reusable assets — uncomment to exclude if you move them to Zenodo:
+# 07_ML_Prediction/models/*.rds
+
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.vscode/
