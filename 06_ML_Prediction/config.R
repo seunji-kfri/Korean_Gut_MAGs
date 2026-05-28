@@ -44,11 +44,19 @@ FILES <- list(
   bin_ko_fpkm       = file.path(INPUT_DIR, "all_bins_KEGG_ko_FPKM_pivot.csv"), # bin x KO FPKM (for carrier profile)
   gold_fpkm         = file.path(INPUT_DIR, "fpkm_gold_long.csv"),           # shotgun gold KO abundance (long)
   picrust_internal  = file.path(INPUT_DIR, "pic_rel.csv"),                  # PICRUSt2 internal (for benchmark)
+  baseline_internal = file.path(INPUT_DIR, "sample_x_ko.baseline.rel.wide.tsv"), # link-based KO table (06_Linking output; for benchmark)
 
   # External cohort (amplicon-only, e.g. 394 samples)
   asv_external      = file.path(INPUT_DIR, "ASV_RA_external.csv"),
   meta_external     = file.path(INPUT_DIR, "meta_external.csv"),
-  picrust_external  = file.path(INPUT_DIR, "picrust2_ext_ko.tsv")
+  picrust_external  = file.path(INPUT_DIR, "picrust2_ext_ko.tsv"),
+
+  # Design-choice analyses (07_ML_Prediction/design_choices/)
+  xgb_vs_ridge_spearman = file.path(INPUT_DIR, "xgb_vs_ridge_spearman.tsv"),  # per-cluster XGB vs Ridge Spearman
+  per_sample_similarity = file.path(INPUT_DIR, "per_sample_similarity.tsv"),  # per-sample Spearman by method
+
+  # Biology interpretation (05_biology.R)
+  ko_pathway_hierarchy  = file.path(INPUT_DIR, "ko_pathway_hierarchy_merged.csv")  # KO -> KEGG Level1/2/3 mapping
 )
 
 # ---- 4. Trained-model / carrier output names --------------------------------
